@@ -16,26 +16,26 @@ const ISSUE_TYPES = [
 ];
 
 const SEVERITY_OPTIONS = [
-  { id: 'Minor',    label: 'Minor',    desc: 'A few bags or scattered litter — fits in a small area (under 1m²)' },
+  { id: 'Minor', label: 'Minor', desc: 'A few bags or scattered litter — fits in a small area (under 1m²)' },
   { id: 'Moderate', label: 'Moderate', desc: 'Noticeable heap — roughly the size of an auto-rickshaw (1–5m²)' },
-  { id: 'Severe',   label: 'Severe',   desc: 'Covers a significant area — sidewalk blocked or road edge piled up (5–20m²)' },
+  { id: 'Severe', label: 'Severe', desc: 'Covers a significant area — sidewalk blocked or road edge piled up (5–20m²)' },
   { id: 'Critical', label: 'Critical', desc: 'Major illegal dumpsite — occupies a vacant plot or entire stretch of road (20m²+)' }
 ];
 
 export function ReportModal({ onClose }) {
-  const [photo, setPhoto]             = useState(null);
-  const [wardInfo, setWardInfo]       = useState(null);
-  const [issueType, setIssueType]     = useState('');
-  const [severity, setSeverity]       = useState('');
-  const [description, setDesc]        = useState('');
-  const [submitted, setSubmitted]     = useState(null);
-  const [outsideWard, setOutside]     = useState(false);
-  const [submitting, setSubmitting]   = useState(false);
+  const [photo, setPhoto] = useState(null);
+  const [wardInfo, setWardInfo] = useState(null);
+  const [issueType, setIssueType] = useState('');
+  const [severity, setSeverity] = useState('');
+  const [description, setDesc] = useState('');
+  const [submitted, setSubmitted] = useState(null);
+  const [outsideWard, setOutside] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // ── Real-time GPS ──
-  const [gpsState, setGpsState]       = useState('acquiring');
-  const [userLat, setUserLat]         = useState(null);
-  const [userLng, setUserLng]         = useState(null);
+  const [gpsState, setGpsState] = useState('acquiring');
+  const [userLat, setUserLat] = useState(null);
+  const [userLng, setUserLng] = useState(null);
   const [gpsAccuracy, setGpsAccuracy] = useState(null);
   const [gpsTimedOut, setGpsTimedOut] = useState(false);
 
@@ -74,6 +74,7 @@ export function ReportModal({ onClose }) {
 
   // Manual retry — re-triggers the browser's permission dialog
   const requestLocation = () => {
+    console.log("yess")
     setGpsState('acquiring');
     navigator.geolocation.getCurrentPosition(
       ({ coords: { latitude, longitude, accuracy } }) => {
@@ -96,11 +97,11 @@ export function ReportModal({ onClose }) {
   const handlePhotoReady = ({ base64, file }) => setPhoto({ base64, file });
 
   const handleSubmit = async () => {
-    if (!photo?.file)        { alert('Please upload a photo first.');                        return; }
-    if (gpsState !== 'done') { alert('Still acquiring GPS. Please allow location access.');  return; }
-    if (!wardInfo)           { alert('Your location is outside Jodhpur ward boundaries.');   return; }
-    if (!issueType)          { alert('Please select an Issue Type.');                        return; }
-    if (!severity)           { alert('Please select How Bad It Is (Severity).');             return; }
+    if (!photo?.file) { alert('Please upload a photo first.'); return; }
+    if (gpsState !== 'done') { alert('Still acquiring GPS. Please allow location access.'); return; }
+    if (!wardInfo) { alert('Your location is outside Jodhpur ward boundaries.'); return; }
+    if (!issueType) { alert('Please select an Issue Type.'); return; }
+    if (!severity) { alert('Please select How Bad It Is (Severity).'); return; }
 
     setSubmitting(true);
     try {
@@ -137,8 +138,8 @@ export function ReportModal({ onClose }) {
             <div className="modal-success">
               <div className="modal-success-icon">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#43a047" strokeWidth="2.5">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
               </div>
               <h3>Complaint Filed!</h3>
@@ -151,7 +152,7 @@ export function ReportModal({ onClose }) {
                 <div className="modal-ward-summary">
                   <div className="modal-ward-row"><span>Ward</span><span>{wardInfo.ward_no} — {wardInfo.ward_name}</span></div>
                   {wardInfo.councillor && <div className="modal-ward-row"><span>Councillor</span><span>{wardInfo.councillor}</span></div>}
-                  {wardInfo.mla        && <div className="modal-ward-row"><span>MLA</span><span>{wardInfo.mla}</span></div>}
+                  {wardInfo.mla && <div className="modal-ward-row"><span>MLA</span><span>{wardInfo.mla}</span></div>}
                 </div>
               )}
               <button className="civic-report-cta" style={{ position: 'static', width: '100%', marginTop: 20 }} onClick={onClose}>
@@ -181,8 +182,8 @@ export function ReportModal({ onClose }) {
                 {gpsState === 'done' && wardInfo && (
                   <div className="gps-status done">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
                     </svg>
                     <div>
                       <div className="gps-ward-name">Ward {wardInfo.ward_no} — {wardInfo.ward_name}</div>
@@ -205,13 +206,13 @@ export function ReportModal({ onClose }) {
                     <div className="gps-denied-card">
                       <div className="gps-denied-icon">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c62828" strokeWidth="1.8">
-                          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                          <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                         </svg>
                       </div>
                       <div className="gps-denied-body">
                         <div className="gps-denied-title">Poor GPS Signal</div>
                         <div className="gps-denied-sub">
-                          Accuracy is ±{gpsAccuracy >= 1000 ? `${Math.round(gpsAccuracy/1000)}km` : `${gpsAccuracy}m`}.
+                          Accuracy is ±{gpsAccuracy >= 1000 ? `${Math.round(gpsAccuracy / 1000)}km` : `${gpsAccuracy}m`}.
                           This device is using IP-based location — not precise enough to detect your ward.
                           Please use a phone with GPS enabled.
                         </div>
@@ -223,7 +224,7 @@ export function ReportModal({ onClose }) {
                   ) : (
                     <div className="gps-status acquiring">
                       <span className="spinner" />
-                      <span>Improving accuracy (±{gpsAccuracy >= 1000 ? `${Math.round(gpsAccuracy/1000)}km` : `${gpsAccuracy}m`})…</span>
+                      <span>Improving accuracy (±{gpsAccuracy >= 1000 ? `${Math.round(gpsAccuracy / 1000)}km` : `${gpsAccuracy}m`})…</span>
                     </div>
                   )
                 )}
@@ -231,9 +232,9 @@ export function ReportModal({ onClose }) {
                   <div className="gps-denied-card">
                     <div className="gps-denied-icon">
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c62828" strokeWidth="1.8">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                        <line x1="12" y1="7" x2="12" y2="11"/>
-                        <line x1="12" y1="15" x2="12.01" y2="15"/>
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <line x1="12" y1="7" x2="12" y2="11" />
+                        <line x1="12" y1="15" x2="12.01" y2="15" />
                       </svg>
                     </div>
                     <div className="gps-denied-body">
@@ -243,8 +244,8 @@ export function ReportModal({ onClose }) {
                       </div>
                       <button className="gps-allow-btn" onClick={requestLocation}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                          <circle cx="12" cy="10" r="3"/>
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
                         </svg>
                         Allow Location Access
                       </button>
@@ -258,9 +259,9 @@ export function ReportModal({ onClose }) {
                   <div className="gps-denied-card">
                     <div className="gps-denied-icon">
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c62828" strokeWidth="1.8">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="12" y1="8" x2="12" y2="12"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
                       </svg>
                     </div>
                     <div className="gps-denied-body">
@@ -321,7 +322,7 @@ export function ReportModal({ onClose }) {
                   </div>
                   <div className="severity-list">
                     {SEVERITY_OPTIONS.map((opt) => (
-                      <div 
+                      <div
                         key={opt.id}
                         className={`severity-card ${severity === opt.id ? 'active' : ''}`}
                         onClick={() => setSeverity(severity === opt.id ? '' : opt.id)}
@@ -351,8 +352,8 @@ export function ReportModal({ onClose }) {
                       onClick={handleSubmit}
                       disabled={submitting || gpsState !== 'done'}
                     >
-                      {submitting ? 'Filing…' : 
-                       (gpsState !== 'done' ? 'Waiting for GPS…' : 'Submit Complaint')}
+                      {submitting ? 'Filing…' :
+                        (gpsState !== 'done' ? 'Waiting for GPS…' : 'Submit Complaint')}
                     </button>
                   </div>
                 </div>

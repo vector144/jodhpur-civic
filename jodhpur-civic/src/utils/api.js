@@ -1,4 +1,15 @@
-import { supabase, getDeviceId } from './supabase';
+import { supabase } from './supabase';
+
+async function getUserIP() {
+  try {
+    const res = await fetch("https://api64.ipify.org?format=json");
+    const data = await res.json();
+    return data.ip;
+  } catch (e) {
+    // If adblocker blocks ipify, fallback to a local token
+    return ;
+  }
+}
 
 export async function uploadImage(supabaseClient, file, bucket) {
   const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
@@ -16,7 +27,7 @@ export async function uploadImage(supabaseClient, file, bucket) {
 }
 
 export async function reportIssue({ file, severity, gps, wardInfo, issueType, description }) {
-  const device_id = getDeviceId();
+  const device_ip = await getUserIP();
 
   // MVP Rate Limiting: Max 5 per day per device (frontend)
   const today = new Date().toISOString().split('T')[0];
@@ -44,7 +55,7 @@ export async function reportIssue({ file, severity, gps, wardInfo, issueType, de
     severity,
     description,
     image_url,
-    device_id
+    device_id: device_ip
   }]);
 
   if (error) throw error;
@@ -53,7 +64,7 @@ export async function reportIssue({ file, severity, gps, wardInfo, issueType, de
 }
 
 export async function verifyIssue({ issueId, file }) {
-  const device_id = getDeviceId();
+  const device_ip = await getUserIP();
 
   // 1) Upload image to 'verifications' bucket
   const image_url = await uploadImage(supabase, file, "verifications");
@@ -62,32 +73,52 @@ export async function verifyIssue({ issueId, file }) {
   const { error } = await supabase.from("verifications").insert([{
     issue_id: issueId,
     image_url,
-    device_id
+    device_id: device_ip || 'unknown'
   }]);
 
   if (error) throw error;
 
-  // Optional MVP workaround: update issue status (might fail if no specific RLS policy grants UPDATE).
-  // Depending on the RLS, this might fail unless enabled for public UPDATE.
-  // Assuming a temporary trigger or policy exists for this hack.
-  // return supabase.from('issues').update({ status: 'resolved' }).eq('id', issueId);
+  // Update the issue status to resolved
+  const { error: updateError } = await supabase.from('issues').update({ status: 'resolved' }).eq('id', issueId);
+  if (updateError) throw updateError;
+}
+
+export async function upvoteIssue(issueId) {
+  const device_ip = await getUserIP();
+  
+  const { error } = await supabase.from("upvotes").insert([{
+    issue_id: issueId,
+    device_ip: device_ip
+  }]);
+
+  if (error) {
+    // 23505 is the Postgres error code for unique_violation
+    if (error.code === '23505') {
+      throw new Error('You have already endorsed this issue.');
+    }
+    throw error;
+  }
 }
 
 export async function getAllComplaintsFromDB() {
   const { data, error } = await supabase
     .from('issues')
-    .select('*')
+    .select('*, verifications(image_url)')
     .order('created_at', { ascending: false });
     
   if (error) throw error;
   
   // Transform to match old keys to reduce breaking UI
-  return data.map(d => ({
-    ...d,
-    tracking_id: d.id,
-    photo_base64: d.image_url,
-    ward_no: d.ward_number,
-    lat: d.latitude,
-    lng: d.longitude
-  }));
+  return data.map(d => {
+    const verifiedBase64 = d.verifications && d.verifications.length > 0 ? d.verifications[0].image_url : null;
+    return {
+      ...d,
+      tracking_id: d.id,
+      photo_base64: d.image_url,
+      verified_photo: verifiedBase64,
+      ward_no: d.ward_number,
+      lat: d.latitude,
+      lng: d.longitude
+    };
+  });
 }

@@ -6,11 +6,12 @@ import { getAllWards } from '../utils/wardLookup';
 const JODHPUR_CENTER = [26.2389, 73.0243];
 const JODHPUR_BOUNDS = L.latLngBounds(L.latLng(25.8, 72.5), L.latLng(26.7, 73.6));
 
-// NammaKasa-style colored circles for status
-const STATUS_COLORS = {
-  open:         '#e53935', // red
-  acknowledged: '#fb8c00', // orange
-  resolved:     '#43a047', // green
+// Pins change color based on severity if unresolved, and turn green/blue for resolved/acknowledged
+const SEVERITY_COLORS = {
+  'Critical': '#d32f2f', // Dark Red
+  'Severe':   '#f57c00', // Orange
+  'Moderate': '#fbc02d', // Yellow
+  'Minor':    '#4db6ac', // Teal
 };
 
 // Custom circle marker icon (same as NammaKasa dots)
@@ -125,7 +126,16 @@ export function MapView({ complaints = [], onMapClick = null, onMarkerClick = nu
 
     complaints.forEach((c) => {
       if (!c.lat || !c.lng) return;
-      const color = STATUS_COLORS[c.status] || STATUS_COLORS.open;
+      
+      let color = '#757575'; // default grey
+      const isResolved = c.status === 'resolved' || !!(c.verified_photo || (c.verifications && c.verifications.length > 0));
+      
+      if (isResolved) {
+        color = '#43a047'; // 1. Support fully fixed -> Green
+      } else {
+        color = SEVERITY_COLORS[c.severity] || '#e53935'; // 2. Open -> Dynamic Severity
+      }
+
       const marker = L.marker([c.lat, c.lng], { icon: makeCircleIcon(color) })
         .addTo(leafletMap.current);
 
