@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { ReportModal } from './pages/ReportModal';
 import { MapView } from './components/MapView';
 import { VerifyModal } from './pages/VerifyModal';
+import { RepModal } from './components/RepModal';
 import { getAllComplaintsFromDB, upvoteIssue } from './utils/api';
+import logo from './assets/logo.png';
 import { supabase } from './utils/supabase';
 import representatives from './data/representatives.json';
 import './App.css';
@@ -15,8 +17,9 @@ export default function App() {
   const [severity, setSeverity] = useState('All Severity');
   const [status, setStatus] = useState('All Status');
   const [showReport, setShowReport] = useState(false);
-  const [view, setView] = useState('map'); // 'map' | 'list'
+  const [view, setView] = useState('map'); // 'map' | 'list' | 'leaders'
   const [selected, setSelected] = useState(null);
+  const [selectedRep, setSelectedRep] = useState(null);
   const [showSevDrop, setShowSevDrop] = useState(false);
   const [showStatDrop, setShowStatDrop] = useState(false);
   const [showVerify, setShowVerify] = useState(false);
@@ -53,13 +56,27 @@ export default function App() {
   // Close dropdowns on outside click
   useEffect(() => {
     const h = () => { setShowSevDrop(false); setShowStatDrop(false); };
+    const onEsc = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedRep(null);
+        setSelected(null);
+        setShowReport(false);
+        setShowVerify(false);
+        window.history.pushState(null, '', '/');
+      }
+    };
     document.addEventListener('click', h);
-    return () => document.removeEventListener('click', h);
+    document.addEventListener('keydown', onEsc);
+    return () => {
+      document.removeEventListener('click', h);
+      document.removeEventListener('keydown', onEsc);
+    };
   }, []);
 
   // Initialize Deep link
   useEffect(() => {
     const handleDeepLink = () => {
+      setSelectedRep(null); // Always wipe rep modal on browser back/forward buttons
       const path = window.location.pathname;
       if (path.startsWith('/report/')) {
         const id = path.split('/report/')[1];
@@ -131,16 +148,36 @@ export default function App() {
   const activeCount = filtered.filter((c) => !isResolved(c)).length;
   const resolvedCount = filtered.filter((c) => isResolved(c)).length;
 
+  const leaderStats = Object.keys(representatives).map(wStr => {
+    const w = parseInt(wStr);
+    const rep = representatives[wStr];
+    const wComplaints = complaints.filter(c => c.ward_no === w);
+    const wActive = wComplaints.filter(c => !isResolved(c)).length;
+    return {
+       ward_no: w,
+       ...rep,
+       total: wComplaints.length,
+       active: wActive,
+       resolved: wComplaints.filter(c => isResolved(c)).length,
+       complaints: wComplaints.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
+    };
+  }).filter(r => r.total > 0).sort((a,b) => b.active - a.active);
+
+  const openRepFromIssue = (ward_no) => {
+    const repStat = leaderStats.find(r => r.ward_no === parseInt(ward_no));
+    if (repStat) {
+      closeDetails(); // Close the issue modal entirely so they don't stack redundantly
+      setSelectedRep(repStat); // Open the Leader profile
+    }
+  };
+
   return (
     <div className="civic-shell">
       {/* ── Top bar ── */}
       <div className="civic-topbar">
         {/* Brand */}
         <div className="civic-brand">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
+          <img src={logo} alt="JDH Civic Logo" style={{ width: 22, height: 22, objectFit: 'contain' }} />
           <span className="civic-brand-name">JDH Civic</span>
           <span className="civic-brand-beta">v0.1</span>
         </div>
@@ -194,6 +231,7 @@ export default function App() {
         <div className="civic-view-toggle">
           <button className={`civic-toggle-btn ${view === 'map' ? 'active' : ''}`} onClick={() => setView('map')}>Map</button>
           <button className={`civic-toggle-btn ${view === 'list' ? 'active' : ''}`} onClick={() => setView('list')}>List</button>
+          <button className={`civic-toggle-btn ${view === 'leaders' ? 'active' : ''}`} onClick={() => setView('leaders')}>Leaders</button>
         </div>
       </div>
 
@@ -245,6 +283,29 @@ export default function App() {
         </div>
       )}
 
+      {/* ── Leaders view ── */}
+      {view === 'leaders' && (
+        <div className="civic-list-view" style={{ background: '#f5f7fa', padding: '16px' }}>
+          <div style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '800', color: '#1565C0' }}>Worst Wards Leaderboard</div>
+          {leaderStats.length === 0 ? (
+            <div className="civic-empty">No data available yet.</div>
+          ) : leaderStats.map((rep, idx) => (
+            <div key={rep.ward_no} className="civic-list-card" onClick={() => setSelectedRep(rep)} style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' }}>
+              <div style={{ fontSize: '20px', fontWeight: 'bold', color: idx < 3 ? '#d32f2f' : '#999', width: '20px', textAlign: 'center' }}>
+                {idx + 1}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '15px', fontWeight: '700', color: '#111' }}>Ward {rep.ward_no} • {rep.councillor}</div>
+                <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>{rep.active} active issues ({rep.total} total)</div>
+              </div>
+              <div style={{ background: '#F1F8FE', color: '#1565C0', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '700' }}>
+                {rep.active} Open
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ── Bottom report CTA ── */}
       <button className="civic-report-cta" onClick={() => setShowReport(true)}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -262,12 +323,12 @@ export default function App() {
               {/* Header: Badges & Actions */}
               <div className="civic-detail-header">
                 <div className="civic-status-badges">
-                  {selected.severity && <span className="civic-badge badge-critical" style={{ background: '#222', color: '#fff' }}>{selected.severity.toUpperCase()}</span>}
+                  {selected.severity && <span className="civic-badge badge-critical-blue" style={{ background: '#222', color: '#fff' }}>{selected.severity.toUpperCase()}</span>}
 
                   {selected.verified_photo || selected.status === 'resolved' ? (
                     <span className="civic-badge" style={{ background: '#e8f5e9', color: '#2e7d32' }}>RESOLVED</span>
                   ) : (
-                    <span className="civic-badge badge-unresolved" style={{ background: '#ffebee', color: '#c62828' }}>{selected.status?.toUpperCase() || 'OPEN'}</span>
+                    <span className="civic-badge badge-unresolved" style={{ background: '#F1F8FE', color: '#1565C0' }}>{selected.status?.toUpperCase() || 'OPEN'}</span>
                   )}
                 </div>
                 <div className="civic-detail-header-actions">
@@ -303,7 +364,7 @@ export default function App() {
               {selected.verified_photo ? (
                 <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '0 20px', margin: '15px 0' }}>
                   <div style={{ flex: '1 1 50%' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#e53935', letterSpacing: '0.5px', marginBottom: 6 }}>BEFORE</div>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#1976D2', letterSpacing: '0.5px', marginBottom: 6 }}>BEFORE</div>
                     <img src={selected.photo_base64} alt="Before" style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '12px' }} />
                   </div>
                   <div style={{ flex: '1 1 50%' }}>
@@ -339,7 +400,7 @@ export default function App() {
               <div className="civic-section-title">Accountability</div>
               <div className="civic-acc-list">
                 {/* Councillor */}
-                <div className="civic-acc-card">
+                <div className="civic-acc-card" style={{ cursor: 'pointer' }} onClick={() => openRepFromIssue(selected.ward_no)}>
                   <div className="acc-avatar">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2">
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
@@ -439,6 +500,14 @@ export default function App() {
           }}
         />
       )}
+
+      <RepModal 
+        rep={selectedRep} 
+        onClose={() => setSelectedRep(null)} 
+        onSelectIssue={openDetails} 
+        isResolved={isResolved} 
+        representatives={representatives} 
+      />
     </div>
   );
 }

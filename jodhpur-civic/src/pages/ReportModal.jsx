@@ -205,7 +205,7 @@ export function ReportModal({ onClose }) {
                   gpsTimedOut || gpsAccuracy > 50000 ? (
                     <div className="gps-denied-card">
                       <div className="gps-denied-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c62828" strokeWidth="1.8">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="1.8">
                           <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                         </svg>
                       </div>
@@ -231,7 +231,7 @@ export function ReportModal({ onClose }) {
                 {gpsState === 'denied' && (
                   <div className="gps-denied-card">
                     <div className="gps-denied-icon">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c62828" strokeWidth="1.8">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="1.8">
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                         <line x1="12" y1="7" x2="12" y2="11" />
                         <line x1="12" y1="15" x2="12.01" y2="15" />
@@ -258,7 +258,7 @@ export function ReportModal({ onClose }) {
                 {gpsState === 'unavailable' && (
                   <div className="gps-denied-card">
                     <div className="gps-denied-icon">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c62828" strokeWidth="1.8">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1565C0" strokeWidth="1.8">
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="8" x2="12" y2="12" />
                         <line x1="12" y1="16" x2="12.01" y2="16" />

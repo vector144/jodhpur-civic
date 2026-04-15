@@ -9,9 +9,9 @@ const JODHPUR_BOUNDS = L.latLngBounds(L.latLng(25.8, 72.5), L.latLng(26.7, 73.6)
 // Pins change color based on severity if unresolved, and turn green/blue for resolved/acknowledged
 const SEVERITY_COLORS = {
   'Critical': '#d32f2f', // Dark Red
-  'Severe':   '#f57c00', // Orange
+  'Severe': '#f57c00', // Orange
   'Moderate': '#fbc02d', // Yellow
-  'Minor':    '#4db6ac', // Teal
+  'Minor': '#4db6ac', // Teal
 };
 
 // Custom circle marker icon (same as NammaKasa dots)
@@ -31,10 +31,10 @@ function makeCircleIcon(color) {
 }
 
 export function MapView({ complaints = [], onMapClick = null, onMarkerClick = null, highlightWardNo = null, height = '100%' }) {
-  const mapRef      = useRef(null);
-  const leafletMap  = useRef(null);
-  const wardLayer   = useRef(null);
-  const markers     = useRef([]);
+  const mapRef = useRef(null);
+  const leafletMap = useRef(null);
+  const wardLayer = useRef(null);
+  const markers = useRef([]);
 
   /* ── Init map once ── */
   useEffect(() => {
@@ -68,10 +68,10 @@ export function MapView({ complaints = [], onMapClick = null, onMarkerClick = nu
       { type: 'FeatureCollection', features: wards },
       {
         style: () => ({
-          color: '#e53935',
+          color: '#1976D2',
           weight: 1.2,
           opacity: 0.6,
-          fillColor: '#ffcdd2',
+          fillColor: '#E3F2FD',
           fillOpacity: 0.15,
           dashArray: '4 4',
         }),
@@ -79,10 +79,12 @@ export function MapView({ complaints = [], onMapClick = null, onMarkerClick = nu
           const { ward_no, ward_name } = feature.properties;
 
           // Tooltip on hover
-          layer.bindTooltip(
-            `<div class="ward-tip"><strong>Ward ${ward_no}</strong><br>${ward_name}</div>`,
-            { sticky: true, direction: 'top', offset: [0, -4] }
-          );
+          layer.bindTooltip(`
+            <div class="ward-tip-modern">
+              <div class="wt-badge">Ward ${ward_no}</div>
+          
+               </div>
+          `, { sticky: true, direction: 'top', className: 'modern-leaflet-tooltip', offset: [0, -10] });
 
           layer.on('mouseover', () => {
             layer.setStyle({ fillOpacity: 0.35, weight: 1.8 });
@@ -109,9 +111,9 @@ export function MapView({ complaints = [], onMapClick = null, onMarkerClick = nu
     wardLayer.current.eachLayer((layer) => {
       const isTarget = String(layer.feature?.properties?.ward_no) === String(highlightWardNo);
       layer.setStyle({
-        color: isTarget ? '#b71c1c' : '#e53935',
+        color: isTarget ? '#0D47A1' : '#1976D2',
         weight: isTarget ? 2.5 : 1.2,
-        fillColor: isTarget ? '#ef9a9a' : '#ffcdd2',
+        fillColor: isTarget ? '#90CAF9' : '#E3F2FD',
         fillOpacity: isTarget ? 0.45 : 0.15,
         dashArray: isTarget ? null : '4 4',
       });
@@ -126,14 +128,14 @@ export function MapView({ complaints = [], onMapClick = null, onMarkerClick = nu
 
     complaints.forEach((c) => {
       if (!c.lat || !c.lng) return;
-      
+
       let color = '#757575'; // default grey
       const isResolved = c.status === 'resolved' || !!(c.verified_photo || (c.verifications && c.verifications.length > 0));
-      
+
       if (isResolved) {
         color = '#43a047'; // 1. Support fully fixed -> Green
       } else {
-        color = SEVERITY_COLORS[c.severity] || '#e53935'; // 2. Open -> Dynamic Severity
+        color = SEVERITY_COLORS[c.severity] || '#1976D2'; // 2. Open -> Dynamic Severity
       }
 
       const marker = L.marker([c.lat, c.lng], { icon: makeCircleIcon(color) })
